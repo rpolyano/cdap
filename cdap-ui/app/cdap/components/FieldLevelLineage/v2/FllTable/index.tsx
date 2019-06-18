@@ -63,6 +63,7 @@ interface ITableProps extends WithStyles<typeof styles> {
   fields: INode[];
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
+  changeTargetHandler: (tableId: string) => void;
 }
 
 function renderGridHeader(fields, tableId, classes) {
@@ -78,13 +79,20 @@ function renderGridHeader(fields, tableId, classes) {
   );
 }
 
-function renderGridBody(fields, tableName, clickFieldHandler, classes) {
+function renderGridBody(
+  fields,
+  tableName,
+  isTarget,
+  clickFieldHandler,
+  changeTargetHandler,
+  classes
+) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
         return (
           <div
-            onClick={clickFieldHandler}
+            onClick={isTarget ? clickFieldHandler : changeTargetHandler}
             className={classnames('grid-row', 'grid-link')}
             key={field.id}
             id={field.id}
@@ -97,7 +105,14 @@ function renderGridBody(fields, tableName, clickFieldHandler, classes) {
   );
 }
 
-function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandler }: ITableProps) {
+function FllTable({
+  tableId,
+  fields,
+  classes,
+  isTarget = false,
+  clickFieldHandler,
+  changeTargetHandler,
+}: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
     <SortableStickyGrid
@@ -106,7 +121,15 @@ function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandle
       gridHeaders={GRID_HEADERS}
       className={classnames(classes.table, { [classes.targetTable]: isTarget })}
       renderGridHeader={renderGridHeader.bind(null, fields, tableId, classes)}
-      renderGridBody={renderGridBody.bind(this, fields, tableId, clickFieldHandler, classes)}
+      renderGridBody={renderGridBody.bind(
+        this,
+        fields,
+        tableId,
+        isTarget,
+        clickFieldHandler,
+        changeTargetHandler,
+        classes
+      )}
     />
   );
 }

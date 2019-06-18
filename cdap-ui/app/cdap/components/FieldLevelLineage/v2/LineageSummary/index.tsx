@@ -35,13 +35,14 @@ const styles = (theme) => {
       position: 'absolute' as 'absolute',
       height: '100%',
       width: '100%',
-      pointerEvents: 'none',
+      pointerEvents: 'none' as 'none',
     },
   };
 };
 
 class LineageSummary extends React.Component<{ classes }> {
-  private activeLinks;
+  private activeLinks = [];
+  private allLinks;
 
   // TO DO: Get colors from theme once we've created a separate theme colors file
   private drawLineFromLink({ source, destination }, isSelected = false) {
@@ -115,9 +116,23 @@ class LineageSummary extends React.Component<{ classes }> {
       .selectAll('path,rect')
       .remove();
 
-    this.activeLinks.forEach((link) => {
+    const selectedLinks = [];
+
+    this.allLinks.forEach((link) => {
       const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
+      if (isSelected) {
+        selectedLinks.push(link);
+      }
       this.drawLineFromLink(link, isSelected);
+    });
+
+    selectedLinks.forEach((link) => {
+      // clear
+      d3.select(`#${link.source}_${link.destination}`)
+        .selectAll('path,rect')
+        .remove();
+      // redraw
+      this.drawLineFromLink(link, true);
     });
   }
 
@@ -128,6 +143,10 @@ class LineageSummary extends React.Component<{ classes }> {
     d3.select(`#${fieldId}`).style('background-color', yellow[200]); // change background
     // highlight active fields
     this.drawLinks(fieldId);
+  }
+
+  private handleTargetChange(e) {
+    // change target table
   }
 
   public componentWillUnmount() {
@@ -151,7 +170,7 @@ class LineageSummary extends React.Component<{ classes }> {
           firstField,
           links,
         }) => {
-          this.activeLinks = links;
+          this.allLinks = links;
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
@@ -168,6 +187,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
+                      changeTargetHandler={this.handleTargetChange.bind(this)}
                       key={key}
                       tableId={key}
                       fields={causeSets[key]}
@@ -183,6 +203,7 @@ class LineageSummary extends React.Component<{ classes }> {
                 />
                 <FllTable
                   clickFieldHandler={this.handleFieldClick.bind(this)}
+                  changeTargetHandler={this.handleTargetChange.bind(this)}
                   isTarget={true}
                   tableId={target}
                   fields={targetFields}
@@ -198,6 +219,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
+                      changeTargetHandler={this.handleTargetChange.bind(this)}
                       key={key}
                       tableId={key}
                       fields={impactSets[key]}
