@@ -95,7 +95,7 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
       .attr('pointer-events', 'fill') // To make rect clickable
-      .style('fill', grey[300]);
+      .style('fill', edgeColor);
 
     // draw right anchor
     linkContainer
@@ -106,7 +106,7 @@ class LineageSummary extends React.Component<{ classes }> {
       .attr('height', anchorHeight)
       .attr('rx', anchorRx)
       .attr('pointer-events', 'fill') // To make rect clickable
-      .style('fill', grey[300]);
+      .style('fill', edgeColor);
   }
 
   private drawLinks(activeFieldId = null) {
@@ -123,6 +123,8 @@ class LineageSummary extends React.Component<{ classes }> {
 
   private handleFieldClick(e) {
     const fieldId = (e.target as HTMLAreaElement).id;
+    d3.selectAll('.grid-row').style('background-color', 'white');
+
     d3.select(`#${fieldId}`).style('background-color', yellow[200]); // change background
     // highlight active fields
     this.drawLinks(fieldId);
