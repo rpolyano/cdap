@@ -118,23 +118,9 @@ class LineageSummary extends React.Component<{ classes }> {
       .selectAll('path,rect')
       .remove();
 
-    const selectedLinks = [];
-
     this.allLinks.forEach((link) => {
       const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
-      if (isSelected) {
-        selectedLinks.push(link);
-      }
       this.drawLineFromLink(link, isSelected);
-    });
-
-    selectedLinks.forEach((link) => {
-      // clear
-      d3.select(`#${link.source}_${link.destination}`)
-        .selectAll('path,rect')
-        .remove();
-      // redraw
-      this.drawLineFromLink(link, true);
     });
   }
 
