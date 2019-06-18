@@ -126,9 +126,16 @@ class LineageSummary extends React.Component<{ classes }> {
 
   private handleFieldClick(e) {
     const fieldId = (e.target as HTMLAreaElement).id;
-    d3.selectAll('.grid-row').style('background-color', 'white');
+    d3.selectAll('.grid-row')
+      .style('background-color', 'inherit')
+      .style('color', 'inherit')
+      .style('font-weight', 'normal');
 
-    d3.select(`#${fieldId}`).style('background-color', yellow[200]); // change background
+    d3.select(`#${fieldId}`)
+      .style('background-color', yellow[200]) // change background
+      .style('color', orange[50])
+      .style('font-weight', 'bold');
+
     // highlight active fields
     this.drawLinks(fieldId);
   }
