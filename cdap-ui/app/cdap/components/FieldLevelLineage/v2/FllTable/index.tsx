@@ -63,7 +63,6 @@ interface ITableProps extends WithStyles<typeof styles> {
   fields: INode[];
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
-  changeTargetHandler: (tableId: string) => void;
 }
 
 function renderGridHeader(fields, tableId, classes) {
@@ -79,20 +78,13 @@ function renderGridHeader(fields, tableId, classes) {
   );
 }
 
-function renderGridBody(
-  fields,
-  tableName,
-  isTarget,
-  clickFieldHandler,
-  changeTargetHandler,
-  classes
-) {
+function renderGridBody(fields, tableName, isTarget, clickFieldHandler, classes) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
         return (
           <div
-            onClick={isTarget ? clickFieldHandler : changeTargetHandler}
+            onClick={isTarget ? clickFieldHandler : undefined}
             className={classnames('grid-row', 'grid-link')}
             key={field.id}
             id={field.id}
@@ -105,14 +97,7 @@ function renderGridBody(
   );
 }
 
-function FllTable({
-  tableId,
-  fields,
-  classes,
-  isTarget = false,
-  clickFieldHandler,
-  changeTargetHandler,
-}: ITableProps) {
+function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandler }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
     <SortableStickyGrid
@@ -127,7 +112,6 @@ function FllTable({
         tableId,
         isTarget,
         clickFieldHandler,
-        changeTargetHandler,
         classes
       )}
     />

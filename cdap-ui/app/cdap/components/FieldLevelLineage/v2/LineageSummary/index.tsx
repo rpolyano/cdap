@@ -62,7 +62,9 @@ class LineageSummary extends React.Component<{ classes }> {
     const sourceY2 = destXY.top + offsetY + 0.5 * sourceXY.height;
 
     // draw an edge from line start to line end
-    const linkContainer = d3.select(`#${source}_${destination}`);
+    const linkContainer = isSelected
+      ? d3.select('#selected-links')
+      : d3.select(`#${source}_${destination}`);
 
     const third = (sourceX2 - sourceX1) / 3;
 
@@ -145,10 +147,6 @@ class LineageSummary extends React.Component<{ classes }> {
     this.drawLinks(fieldId);
   }
 
-  private handleTargetChange(e) {
-    // change target table
-  }
-
   public componentWillUnmount() {
     window.removeEventListener('resize', debounce(this.drawLinks.bind(this), 1));
   }
@@ -180,6 +178,7 @@ class LineageSummary extends React.Component<{ classes }> {
                     return <svg id={id} key={id} className="fll-link" />;
                   })}
                 </g>
+                <g id="selected-links" />
               </svg>
               <div>
                 <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
@@ -187,7 +186,6 @@ class LineageSummary extends React.Component<{ classes }> {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
-                      changeTargetHandler={this.handleTargetChange.bind(this)}
                       key={key}
                       tableId={key}
                       fields={causeSets[key]}
@@ -203,7 +201,6 @@ class LineageSummary extends React.Component<{ classes }> {
                 />
                 <FllTable
                   clickFieldHandler={this.handleFieldClick.bind(this)}
-                  changeTargetHandler={this.handleTargetChange.bind(this)}
                   isTarget={true}
                   tableId={target}
                   fields={targetFields}
@@ -219,7 +216,6 @@ class LineageSummary extends React.Component<{ classes }> {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
-                      changeTargetHandler={this.handleTargetChange.bind(this)}
                       key={key}
                       tableId={key}
                       fields={impactSets[key]}
