@@ -45,6 +45,11 @@ const styles = (theme) => {
       ' & .grid-row:hover': {
         backgroundColor: theme.palette.grey[700],
       },
+      ' & .grid-row.selected': {
+        backgroundColor: theme.palette.yellow[200],
+        color: theme.palette.orange[50],
+        fontWeight: 'bold',
+      },
     },
     tableHeader: {
       borderBottom: `2px solid ${theme.palette.grey[300]}`,

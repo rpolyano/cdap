@@ -41,7 +41,7 @@ const styles = (theme) => {
 };
 
 class LineageSummary extends React.Component<{ classes }> {
-  private activeLinks = [];
+  private activeField;
   private allLinks;
 
   // TO DO: Get colors from theme once we've created a separate theme colors file
@@ -125,18 +125,11 @@ class LineageSummary extends React.Component<{ classes }> {
   }
 
   private handleFieldClick(e) {
+    d3.select(`#${this.activeField}`).classed('selected', false);
     const fieldId = (e.target as HTMLAreaElement).id;
-    d3.selectAll('.grid-row')
-      .style('background-color', 'inherit')
-      .style('color', 'inherit')
-      .style('font-weight', 'normal');
+    this.activeField = fieldId;
+    d3.select(`#${fieldId}`).classed('selected', true);
 
-    d3.select(`#${fieldId}`)
-      .style('background-color', yellow[200]) // change background
-      .style('color', orange[50])
-      .style('font-weight', 'bold');
-
-    // highlight active fields
     this.drawLinks(fieldId);
   }
 
@@ -159,9 +152,11 @@ class LineageSummary extends React.Component<{ classes }> {
           firstCause,
           firstImpact,
           firstField,
+          activeField,
           links,
         }) => {
           this.allLinks = links;
+          this.activeField = activeField;
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
