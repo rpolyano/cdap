@@ -21,7 +21,7 @@ import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
 import debounce from 'lodash/debounce';
-import { grey, orange, yellow } from 'components/ThemeWrapper/colors';
+import { grey, orange } from 'components/ThemeWrapper/colors';
 
 const styles = (theme) => {
   return {
@@ -30,12 +30,14 @@ const styles = (theme) => {
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
+      position: 'relative',
     },
     container: {
       position: 'absolute' as 'absolute',
-      height: '100%',
+      height: '200%', // this seems like cheating
       width: '100%',
       pointerEvents: 'none' as 'none',
+      overflow: 'visible',
     },
   };
 };
@@ -43,8 +45,8 @@ const styles = (theme) => {
 class LineageSummary extends React.Component<{ classes }> {
   private activeField;
   private allLinks;
+  private activeLinks = [];
 
-  // TO DO: Get colors from theme once we've created a separate theme colors file
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
     const sourceEl = d3.select(`#${source}`);
@@ -118,10 +120,15 @@ class LineageSummary extends React.Component<{ classes }> {
       .selectAll('path,rect')
       .remove();
 
+    const activeLinks = [];
     this.allLinks.forEach((link) => {
       const isSelected = link.source === activeFieldId || link.destination === activeFieldId;
+      if (isSelected) {
+        activeLinks.push(link);
+      }
       this.drawLineFromLink(link, isSelected);
     });
+    this.activeLinks = activeLinks;
   }
 
   private handleFieldClick(e) {
@@ -131,6 +138,14 @@ class LineageSummary extends React.Component<{ classes }> {
     d3.select(`#${fieldId}`).classed('selected', true);
 
     this.drawLinks(fieldId);
+  }
+
+  private drawRootAndImpact() {
+    // Go through active links
+    // find the name(s) of the cause and impact tables that are in active links
+    // need to somehow temporarily rendor a subset of the tables and fields, and re-render when user clicks "reset"
+    // Do I need a separate render function? i.e. renderSelectedFields or something like that?
+    // Could potentially also use it for filtering
   }
 
   public componentWillUnmount() {
