@@ -34,7 +34,7 @@ const styles = (theme) => {
     },
     container: {
       position: 'absolute' as 'absolute',
-      height: '200%', // this seems like cheating
+      height: '110%', // this seems like cheating
       width: '100%',
       pointerEvents: 'none' as 'none',
       overflow: 'visible',
@@ -47,13 +47,14 @@ class LineageSummary extends React.Component<{ classes }> {
   private allLinks;
   private activeLinks = [];
 
+  // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
     // get source and destination elements and their coordinates
     const sourceEl = d3.select(`#${source}`);
     const destEl = d3.select(`#${destination}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -50; // From the FllHeader
+    const offsetY = -50 + window.pageYOffset; // From the FllHeader
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();
