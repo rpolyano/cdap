@@ -21,7 +21,7 @@ import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
-import { Hidden } from '@material-ui/core';
+import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 const styles = (theme) => {
   return createStyles({
@@ -94,21 +94,29 @@ function renderGridHeader(fields, classes) {
 
 function renderGridBody(fields, tableName, isTarget, clickFieldHandler, classes) {
   return (
-    <div className={classes.gridBody} id={tableName}>
-      {fields.map((field) => {
+    <Consumer>
+      {({ activeField }) => {
+        console.log(activeField, 'active field')
+        )
         return (
-          <div
-            onClick={isTarget ? clickFieldHandler : undefined}
-            className={classnames('grid-row', 'grid-link')}
-            key={field.id}
-            id={field.id}
-          >
-            {field.name}
-            {/* <span className={classes.viewLineage}>View lineage</span> */}
+          <div className={classes.gridBody} id={tableName}>
+            {fields.map((field) => {
+              return (
+                <div
+                  onClick={isTarget ? clickFieldHandler : undefined}
+                  className={classnames('grid-row', 'grid-link')}
+                  key={field.id}
+                  id={field.id}
+                >
+                  {field.name}
+                  {/* <span className={classes.viewLineage}>View lineage</span> */}
+                </div>
+              );
+            })}
           </div>
         );
-      })}
-    </div>
+      }}
+    </Consumer>
   );
 }
 
