@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 
 import java.util.List;
 import java.util.Map;
@@ -29,15 +30,18 @@ public class MetricQueryRequest {
   /**
    * Format for metrics query in batched queries
    */
-  Map<String, String> tags;
-  List<String> metrics;
-  List<String> groupBy;
-  TimeRange timeRange;
+  private final Map<String, String> tags;
+  private final List<String> metrics;
+  private final List<String> groupBy;
+  private final MetricsAggregationOption aggregation;
+  private TimeRange timeRange;
 
-  public MetricQueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy) {
+  public MetricQueryRequest(Map<String, String> tags, List<String> metrics, List<String> groupBy,
+                            @Nullable MetricsAggregationOption aggregation) {
     this.tags = tags;
     this.metrics = metrics;
     this.groupBy = groupBy;
+    this.aggregation = aggregation;
   }
 
   public Map<String, String> getTags() {
@@ -50,6 +54,11 @@ public class MetricQueryRequest {
 
   public List<String> getGroupBy() {
     return groupBy;
+  }
+
+  @Nullable
+  public MetricsAggregationOption getAggregation() {
+    return aggregation;
   }
 
   public TimeRange getTimeRange() {

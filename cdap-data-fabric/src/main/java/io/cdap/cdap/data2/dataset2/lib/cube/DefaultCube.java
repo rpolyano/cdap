@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.dataset2.lib.cube;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -32,6 +33,7 @@ import io.cdap.cdap.api.dataset.lib.cube.CubeExploreQuery;
 import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
 import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
 import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
@@ -47,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -439,30 +442,47 @@ public class DefaultCube implements Cube, MeteredDataset {
     return result;
   }
 
-  private Collection<TimeSeries> convertToQueryResult(CubeQuery query,
-                                                      Table<Map<String, String>, String,
-                                                        Map<Long, Long>> resultTable) {
-
-    List<TimeSeries> result = Lists.newArrayList();
+  private Collection<TimeSeries> convertToQueryResult(
+    CubeQuery query, Table<Map<String, String>, String, Map<Long, Long>> resultTable) {
+    List<TimeSeries> result = new ArrayList<>();
     // iterating each groupValue dimensions
     for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
       // iterating each measure
       for (Map.Entry<String, Map<Long, Long>> measureEntry : row.getValue().entrySet()) {
         // generating time series for a grouping and a measure
         int count = 0;
-        List<TimeValue> timeValues = Lists.newArrayList();
+        List<TimeValue> timeValues = new ArrayList<>();
         for (Map.Entry<Long, Long> timeValue : measureEntry.getValue().entrySet()) {
           timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
         }
         Collections.sort(timeValues);
-        PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-          new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
-        List<TimeValue> resultTimeValues = Lists.newArrayList();
-        while (timeValueItor.hasNext()) {
-          TimeValue timeValue = timeValueItor.next();
-          resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
-          if (++count >= query.getLimit()) {
-            break;
+        List<TimeValue> resultTimeValues = new ArrayList<>();
+
+        MetricsAggregationOption aggregationOption = query.getAggregationOption();
+        // only do aggregation if the data points are larger than the required count
+        if (aggregationOption != null && aggregationOption.getCount() < timeValues.size()) {
+          int partitionSize = timeValues.size() / aggregationOption.getCount();
+          for (List<TimeValue> interval : Iterables.partition(timeValues, partitionSize)) {
+            if (aggregationOption.getAggregationOption().equals(MetricsAggregationOption.AggregationOption.LATEST)) {
+              resultTimeValues.add(interval.get(interval.size() - 1));
+            } else {
+              long sum = interval.stream().mapToLong(TimeValue::getValue).sum();
+              resultTimeValues.add(new TimeValue(interval.get(interval.size() - 1).getTimestamp(), sum));
+            }
+            if (++count >= query.getLimit()) {
+              break;
+            }
+          }
+        } else {
+          // TODO: CDAP-15565 remove the interpolation logic since it is never maintained and adds huge complexity
+          PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
+            new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+          while (timeValueItor.hasNext()) {
+            TimeValue timeValue = timeValueItor.next();
+            resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
+            if (++count >= query.getLimit()) {
+              break;
+            }
           }
         }
         result.add(new TimeSeries(measureEntry.getKey(), row.getKey(), resultTimeValues));

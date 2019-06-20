@@ -276,7 +276,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
       }
       tags = overrideTags(tags, namespaceId, previewId);
       responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(helper.executeTagQuery(tags, metrics, groupBy, queryParameters)));
+                         GSON.toJson(helper.executeTagQuery(tags, metrics, groupBy, queryParameters, null)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

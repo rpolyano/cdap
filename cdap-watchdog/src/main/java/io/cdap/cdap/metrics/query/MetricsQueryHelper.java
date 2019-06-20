@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolators;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricSearchQuery;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -150,8 +152,10 @@ public class MetricsQueryHelper {
   }
 
   public MetricQueryResult executeTagQuery(List<String> tags, List<String> metrics, List<String> groupByTags,
-                                           Map<String, List<String>> queryTimeParams) throws Exception {
-    MetricQueryRequest queryRequest = new MetricQueryRequest(parseTagValuesAsMap(tags), metrics, groupByTags);
+                                           Map<String, List<String>> queryTimeParams,
+                                           @Nullable MetricsAggregationOption aggregationRequest) throws Exception {
+    MetricQueryRequest queryRequest = new MetricQueryRequest(parseTagValuesAsMap(tags), metrics, groupByTags,
+                                                             aggregationRequest);
     setTimeRangeInQueryRequest(queryRequest, queryTimeParams);
     return executeQuery(queryRequest);
   }
@@ -231,7 +235,8 @@ public class MetricsQueryHelper {
 
     MetricQueryRequest queryRequest = new MetricQueryRequest(queryRequestFormat.getTags(),
                                                              queryRequestFormat.getMetrics(),
-                                                             queryRequestFormat.getGroupBy());
+                                                             queryRequestFormat.getGroupBy(),
+                                                             queryRequestFormat.getAggregation());
     setTimeRangeInQueryRequest(queryRequest, queryParams);
     return queryRequest;
   }
@@ -350,15 +355,25 @@ public class MetricsQueryHelper {
       throw new IllegalArgumentException("Missing metrics parameter in the query");
     }
 
+    MetricsAggregationOption aggregation = queryRequest.getAggregation();
+    if (aggregation != null && (aggregation.getAggregationOption() == null || aggregation.getCount() <= 0)) {
+      throw new IllegalArgumentException("Invalid metrics aggregation request, the aggregation option must " +
+                                           "be specified and the aggregation count must be greater than 0");
+    }
+
     Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
     MetricQueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
+    if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && aggregation != null) {
+      throw new IllegalArgumentException("The aggregation option can only be used for the second, min and " +
+                                           "hour resolution");
+    }
 
     MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
                                                 timeRange.getResolutionInSeconds(),
                                                 timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
                                                 tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
-                                                timeRange.getInterpolate());
+                                                aggregation, timeRange.getInterpolate());
     Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
     long endTime = timeRange.getEnd();
@@ -455,22 +470,24 @@ public class MetricsQueryHelper {
    * {@link MetricQueryRequest} will be constructed
    */
   public class QueryRequestFormat {
-    Map<String, String> tags;
-    List<String> metrics;
-    List<String> groupBy;
-    Map<String, String> timeRange;
+    private Map<String, String> tags;
+    private List<String> metrics;
+    private List<String> groupBy;
+    private Map<String, String> timeRange;
+    private MetricsAggregationOption aggregation;
 
     public Map<String, String> getTags() {
-      tags = (tags == null) ? Maps.<String, String>newHashMap() : tags;
+      tags = tags == null ? Collections.emptyMap() : tags;
       return tags;
     }
 
     public List<String> getMetrics() {
+      metrics = metrics == null ? Collections.emptyList() : metrics;
       return metrics;
     }
 
     public List<String> getGroupBy() {
-      groupBy = (groupBy == null) ? Lists.<String>newArrayList() : groupBy;
+      groupBy = groupBy == null ? Collections.emptyList() : groupBy;
       return groupBy;
     }
 
@@ -484,6 +501,11 @@ public class MetricsQueryHelper {
     public Map<String, String> getTimeRange() {
       timeRange = (timeRange == null || timeRange.size() == 0) ? ImmutableMap.of("aggregate", "true") : timeRange;
       return timeRange;
+    }
+
+    @Nullable
+    public MetricsAggregationOption getAggregation() {
+      return aggregation;
     }
   }
 }

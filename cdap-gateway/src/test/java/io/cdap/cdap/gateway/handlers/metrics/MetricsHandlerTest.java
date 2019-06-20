@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValues;
@@ -232,29 +233,29 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                                   "service", "WCounter", "handler", "splitter"),
-                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                           ImmutableMap.<String, String>of());
+                                                       ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                                       ImmutableMap.<String, String>of(), null);
 
     // empty time range should default to aggregate=true
     QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                                   "service", "WCounter", "handler", "counter"),
-                                           ImmutableList.of("system.reads"),
-                                           ImmutableList.<String>of(),
-                                           ImmutableMap.of("aggregate", "true"));
+                                                       ImmutableList.of("system.reads"),
+                                                       ImmutableList.<String>of(),
+                                                       ImmutableMap.of("aggregate", "true"), null);
 
 
     QueryRequestFormat query3 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                                   "service", "WCounter", "handler", "*"),
-                                           ImmutableList.of("system.reads"),
-                                           ImmutableList.<String>of(),
-                                           ImmutableMap.of("aggregate", "true"));
+                                                       ImmutableList.of("system.reads"),
+                                                       ImmutableList.<String>of(),
+                                                       ImmutableMap.of("aggregate", "true"), null);
 
 
     QueryRequestFormat query4 = new QueryRequestFormat(ImmutableMap.of("namespace", "myspace", "app", "WordCount1",
                                                                        "service", "WordCounter", "handler", "splitter"),
-                                           ImmutableList.of("system.reads", "system.writes"),
-                                           ImmutableList.<String>of(),
-                                           ImmutableMap.of("aggregate", "true"));
+                                                       ImmutableList.of("system.reads", "system.writes"),
+                                                       ImmutableList.<String>of(),
+                                                       ImmutableMap.of("aggregate", "true"), null);
 
     // test batching of multiple queries
 
@@ -295,7 +296,7 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     // batch query with empty metrics list
     QueryRequestFormat invalidQuery = new QueryRequestFormat(
       ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "service", "WordCounter", "handler", "splitter"),
-      ImmutableList.<String>of(), ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+      ImmutableList.<String>of(), ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"), null);
 
     response = doPost("/v3/metrics/query", GSON.toJson(ImmutableMap.of("invalid", invalidQuery)));
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
@@ -320,17 +321,20 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
    * Helper class to construct json for MetricQueryRequest for batch queries
    */
   private class QueryRequestFormat {
-    Map<String, String> tags;
-    List<String> metrics;
-    List<String> groupBy;
-    Map<String, String> timeRange;
+    private final Map<String, String> tags;
+    private final List<String> metrics;
+    private final List<String> groupBy;
+    private final Map<String, String> timeRange;
+    private final MetricsAggregationOption aggregation;
 
     QueryRequestFormat(Map<String, String> tags, List<String> metrics, List<String> groupBy,
-                       Map<String, String> timeRange) {
+                       Map<String, String> timeRange,
+                       @Nullable MetricsAggregationOption aggregation) {
       this.tags = tags;
       this.metrics = metrics;
       this.groupBy = groupBy;
       this.timeRange = timeRange;
+      this.aggregation = aggregation;
     }
   }
 
@@ -362,15 +366,15 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                       "service", "WCounter", "handler", "splitter"),
-                                           ImmutableList.of("system.reads"), ImmutableList.<String>of(),
-                                           ImmutableMap.of("start", String.valueOf(start),
-                                                           "end", String.valueOf(end)));
+                                                       ImmutableList.of("system.reads"), ImmutableList.<String>of(),
+                                                       ImmutableMap.of("start", String.valueOf(start),
+                                                           "end", String.valueOf(end)), null);
 
     QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
                                                       "service", "WCounter"), ImmutableList.of("system.reads"),
-                                           ImmutableList.of("handler"),
-                                           ImmutableMap.of("start", String.valueOf(start),
-                                                           "count", String.valueOf(count)));
+                                                       ImmutableList.of("handler"),
+                                                       ImmutableMap.of("start", String.valueOf(start),
+                                                           "count", String.valueOf(count)), null);
 
     ImmutableMap<String, QueryResult> expected =
       ImmutableMap.of("timeRangeQuery1",
@@ -826,6 +830,109 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     // test if start time > end time
     verifyResolution(null, 10000L, 100L, null, 400, null);
+  }
+
+  @Test
+  public void testAggregationOption() throws Exception {
+    Map<String, String> tags = getServiceContext("aggregation", "test", "test", "run1", "aggregationOption");
+
+    // put 3600 metrics, each per second to the table, counter will increment by 2 per second, gauge will become larger
+    // by 1 per second
+    List<MetricValues> metricValues = new ArrayList<>();
+    for (int i = 0; i < 3600; i++) {
+      metricValues.add(new MetricValues(tags, "agg.counter", i, 2L, MetricType.COUNTER));
+      metricValues.add(new MetricValues(tags, "agg.gauge", i, i + 1, MetricType.GAUGE));
+    }
+    metricStore.add(metricValues);
+
+    // test some invalid query
+    // the resolution cannot be max resolution
+    queryAggregationOption(ImmutableList.of("system.agg.counter"), Integer.toString(Integer.MAX_VALUE),
+                           new MetricsAggregationOption(5, MetricsAggregationOption.AggregationOption.SUM), 400);
+    // the agg count should be greater than 0
+    queryAggregationOption(ImmutableList.of("system.agg.counter"), "1s",
+                           new MetricsAggregationOption(0, MetricsAggregationOption.AggregationOption.SUM), 400);
+    // agg option must be provided
+    queryAggregationOption(ImmutableList.of("system.agg.counter"), "1s",
+                           new MetricsAggregationOption(5, null), 400);
+
+    // query without aggregation option, should get 3600 data points back for each metric name
+    MetricQueryResult result = queryAggregationOption(ImmutableList.of("system.agg.counter", "system.agg.gauge"),
+                                                      "1s", null, 200);
+    MetricQueryResult.TimeSeries[] series = result.getSeries();
+    Assert.assertEquals(2, series.length);
+    Assert.assertEquals(3600, series[0].getData().length);
+    for (int i = 0; i < series[0].getData().length; i++) {
+      Assert.assertEquals(i, series[0].getData()[i].getTime());
+      Assert.assertEquals(2, series[0].getData()[i].getValue());
+      Assert.assertEquals(i, series[1].getData()[i].getTime());
+      Assert.assertEquals(i + 1, series[1].getData()[i].getValue());
+    }
+
+    // query with aggregation sum for 10 data points for counter with 1s resolution,
+    // each point should have sum 3600/10*2=720
+    result = queryAggregationOption(ImmutableList.of("system.agg.counter"), "1s",
+                                    new MetricsAggregationOption(10, MetricsAggregationOption.AggregationOption.SUM),
+                                    200);
+    validateAggregationOptionSum(result, 10, 720, 1);
+
+    // query with aggregation latest for 10 data points for gauge, each point should have latest value as multiples of
+    // 360
+    result = queryAggregationOption(ImmutableList.of("system.agg.gauge"), "1s",
+                                    new MetricsAggregationOption(10,
+                                                                 MetricsAggregationOption.AggregationOption.LATEST),
+                                    200);
+    series = result.getSeries();
+    Assert.assertEquals(1, series.length);
+    Assert.assertEquals(10, series[0].getData().length);
+    for (int i = 0; i < series[0].getData().length; i++) {
+      Assert.assertEquals(360 * (i + 1) - 1, series[0].getData()[i].getTime());
+      Assert.assertEquals(360 * (i + 1), series[0].getData()[i].getValue());
+    }
+
+    // query with aggregation sum for 5 data points for counter for 1m, each point should have sum 3600/5*2=1440
+    result = queryAggregationOption(ImmutableList.of("system.agg.counter"), "1m",
+                                    new MetricsAggregationOption(5, MetricsAggregationOption.AggregationOption.SUM),
+                                    200);
+    validateAggregationOptionSum(result, 5, 1440, 60);
+
+    // query by request body
+    QueryRequestFormat query =
+      new QueryRequestFormat(getTagsMap("namespace", "aggregation", "app", "test",
+                                        "service", "test", "handler", "aggregationOption"),
+                             ImmutableList.of("system.agg.counter"), ImmutableList.of(),
+                             ImmutableMap.of("start", "0", "end", "now", "resolution", "1s"),
+                             new MetricsAggregationOption(10, MetricsAggregationOption.AggregationOption.SUM));
+    Map<String, MetricQueryResult> bodyResult = post("/v3/metrics/query", GSON.toJson(ImmutableMap.of("qid", query)),
+                                                     new TypeToken<Map<String, MetricQueryResult>>() { }.getType(),
+                                                     200);
+    Assert.assertEquals(1, bodyResult.size());
+    validateAggregationOptionSum(bodyResult.get("qid"), 10, 720, 1);
+  }
+
+  private void validateAggregationOptionSum(MetricQueryResult result, int numPoints,
+                                            int expectedSum, int resolution) throws Exception {
+    MetricQueryResult.TimeSeries[] series = result.getSeries();
+    Assert.assertEquals(1, series.length);
+    Assert.assertEquals(numPoints, series[0].getData().length);
+    for (int i = 0; i < series[0].getData().length; i++) {
+      Assert.assertEquals((3600 / numPoints) * (i + 1) - resolution, series[0].getData()[i].getTime());
+      Assert.assertEquals(expectedSum, series[0].getData()[i].getValue());
+    }
+  }
+
+  private MetricQueryResult queryAggregationOption(List<String> metricNames, String resolution,
+                                                   @Nullable MetricsAggregationOption aggregationOption,
+                                                   int expectedCode) throws Exception {
+    StringBuilder url = new StringBuilder("/v3/metrics/query?start=0&end=now");
+    url.append(getTags("aggregation", "test", "test", "aggregationOption"));
+    url.append("&resolution=").append(resolution);
+    for (String metricName : metricNames) {
+      url.append("&metric=").append(metricName);
+    }
+    url.append(aggregationOption == null ? "" : "&aggregationCount=" + aggregationOption.getCount() +
+      "&aggregationOption=" + aggregationOption.getAggregationOption());
+    return post(url.toString(), null, MetricQueryResult.class, expectedCode);
   }
 
   private void verifyResolution(@Nullable String resolution, @Nullable Long start, @Nullable Long end,

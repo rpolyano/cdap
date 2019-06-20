@@ -19,6 +19,7 @@ package io.cdap.cdap.metrics.query;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -83,12 +84,25 @@ public class MetricsHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * REST endpoint for metrics query
+   *
+   * @param metrics the list metrics name
+   * @param groupBy the list of tag names to group the results
+   * @param tags the tags of the metric names
+   * @param aggregationCount a count to aggregate the data points, can only be used if resolution is not the MAX_VALUE
+   *                         and the aggregation option is provided, the results will get aggregated into this number
+   *                         of data points
+   * @param option the aggregation option, currently only LATEST and SUM are supported
+   */
   @POST
   @Path("/query")
   public void query(FullHttpRequest request, HttpResponder responder,
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
-                    @QueryParam("tag") List<String> tags) throws Exception {
+                    @QueryParam("tag") List<String> tags,
+                    @QueryParam("aggregationCount") int aggregationCount,
+                    @QueryParam("aggregationOption") String option) throws Exception {
     try {
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
       if (queryParams.isEmpty()) {
@@ -101,8 +115,14 @@ public class MetricsHandler extends AbstractHttpHandler {
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
-      responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+      MetricsAggregationOption aggRequest = null;
+      if (option != null) {
+        aggRequest = new MetricsAggregationOption(aggregationCount,
+                                                  MetricsAggregationOption.AggregationOption.valueOf(option));
+      }
+      responder.sendJson(
+        HttpResponseStatus.OK,
+        GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams, aggRequest)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());

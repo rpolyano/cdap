@@ -18,11 +18,10 @@ package io.cdap.cdap.api.metrics;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.Interpolator;
+import io.cdap.cdap.api.dataset.lib.cube.MetricsAggregationOption;
 
 import java.util.List;
 import java.util.Map;
@@ -60,6 +59,7 @@ public final class MetricDataQuery {
   private final Map<String, AggregationFunction> metrics;
   private final Map<String, String> sliceByTagValues;
   private final List<String> groupByTags;
+  private final MetricsAggregationOption aggregationOption;
 
   private final Interpolator interpolator;
 
@@ -94,13 +94,22 @@ public final class MetricDataQuery {
                          Map<String, AggregationFunction> metrics,
                          Map<String, String> sliceByTagValues, List<String> groupByTags,
                          @Nullable Interpolator interpolator) {
+    this(startTs, endTs, resolution, limit, metrics, sliceByTagValues, groupByTags, null, interpolator);
+  }
+
+  public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
+                         Map<String, AggregationFunction> metrics,
+                         Map<String, String> sliceByTagValues, List<String> groupByTags,
+                         @Nullable MetricsAggregationOption aggregationOption,
+                         @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
     this.metrics = metrics;
-    this.sliceByTagValues = Maps.newHashMap(sliceByTagValues);
-    this.groupByTags = ImmutableList.copyOf(groupByTags);
+    this.sliceByTagValues = sliceByTagValues;
+    this.groupByTags = groupByTags;
+    this.aggregationOption = aggregationOption;
     this.interpolator = interpolator;
   }
 
@@ -152,6 +161,11 @@ public final class MetricDataQuery {
   // todo: push down limit support to Cube
   public int getLimit() {
     return limit;
+  }
+
+  @Nullable
+  public MetricsAggregationOption getAggregationOption() {
+    return aggregationOption;
   }
 
   public Interpolator getInterpolator() {
