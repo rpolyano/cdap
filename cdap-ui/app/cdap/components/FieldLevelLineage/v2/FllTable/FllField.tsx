@@ -38,6 +38,10 @@ const styles = (theme) => {
     hoverText: {
       color: theme.palette.blue[200],
     },
+    targetView: {
+      color: theme.palette.blue[200],
+      textAlign: 'right' as 'right',
+    },
   };
 };
 
@@ -48,7 +52,13 @@ interface IFieldProps extends WithStyles<typeof styles> {
   clickFieldHandler: (event: React.MouseEvent<HTMLInputElement>) => void;
 }
 
-function FllField({ field, isTarget = false, clickFieldHandler, classes }: IFieldProps) {
+function FllField({
+  field,
+  isTarget = false,
+  clickFieldHandler,
+  activeField,
+  classes,
+}: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
   const toggleHoverState = () => {
     setHoverState(!isHovering);
@@ -69,6 +79,7 @@ function FllField({ field, isTarget = false, clickFieldHandler, classes }: IFiel
             {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
           </span>
         )}
+      {field.id === activeField && <span className={classes.targetView}>View</span>}
     </div>
   );
 }

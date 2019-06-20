@@ -14,6 +14,11 @@
  * the License.
 */
 
+export interface ILink {
+  source: string;
+  destination: string;
+}
+
 // Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
 
 export function parseRelations(namespace, target, ents, isCause = true) {

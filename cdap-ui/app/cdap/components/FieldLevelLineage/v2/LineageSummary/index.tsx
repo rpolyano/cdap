@@ -30,7 +30,7 @@ const styles = (theme) => {
       paddingRight: '100px',
       display: 'flex',
       justifyContent: 'space-between',
-      position: 'relative',
+      position: 'relative' as 'relative',
     },
     container: {
       position: 'absolute' as 'absolute',
@@ -42,9 +42,19 @@ const styles = (theme) => {
   };
 };
 
-class LineageSummary extends React.Component<{ classes }> {
-  private activeField;
-  private allLinks;
+interface ILineageState {
+  activeField: string;
+}
+
+class LineageSummary extends React.Component<{ classes }, ILineageState> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeField: null,
+    };
+  }
+  // private activeField = null;
+  private allLinks = [];
   private activeLinks = [];
 
   // TO DO: This currently breaks when the window is scrolled before drawing
@@ -133,9 +143,9 @@ class LineageSummary extends React.Component<{ classes }> {
   }
 
   private handleFieldClick(e) {
-    d3.select(`#${this.activeField}`).classed('selected', false);
+    d3.select(`#${this.state.activeField}`).classed('selected', false);
     const fieldId = (e.target as HTMLAreaElement).id;
-    this.activeField = fieldId;
+    this.setState({ activeField: fieldId });
     d3.select(`#${fieldId}`).classed('selected', true);
 
     this.drawLinks(fieldId);
@@ -168,11 +178,9 @@ class LineageSummary extends React.Component<{ classes }> {
           firstCause,
           firstImpact,
           firstField,
-          activeField,
           links,
         }) => {
           this.allLinks = links;
-          this.activeField = activeField;
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
@@ -193,6 +201,7 @@ class LineageSummary extends React.Component<{ classes }> {
                       key={key}
                       tableId={key}
                       fields={causeSets[key]}
+                      activeField={this.state.activeField}
                     />
                   );
                 })}
@@ -208,6 +217,7 @@ class LineageSummary extends React.Component<{ classes }> {
                   isTarget={true}
                   tableId={target}
                   fields={targetFields}
+                  activeField={this.state.activeField}
                 />
               </div>
               <div>
@@ -223,6 +233,7 @@ class LineageSummary extends React.Component<{ classes }> {
                       key={key}
                       tableId={key}
                       fields={impactSets[key]}
+                      activeField={this.state.activeField}
                     />
                   );
                 })}

@@ -78,6 +78,7 @@ interface ITableProps extends WithStyles<typeof styles> {
   fields: INode[];
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
+  activeField: string;
 }
 
 function renderGridHeader(fields, classes) {
@@ -111,31 +112,32 @@ function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeFi
   );
 }
 
-function FllTable({ tableId, fields, classes, isTarget = false, clickFieldHandler }: ITableProps) {
+function FllTable({
+  tableId,
+  fields,
+  classes,
+  isTarget = false,
+  clickFieldHandler,
+  activeField,
+}: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
-    <Consumer>
-      {({ activeField }) => {
-        return (
-          <SortableStickyGrid
-            key={`cause ${tableId}`}
-            entities={fields}
-            gridHeaders={GRID_HEADERS}
-            className={classnames(classes.table, { [classes.targetTable]: isTarget })}
-            renderGridHeader={renderGridHeader.bind(null, fields, classes)}
-            renderGridBody={renderGridBody.bind(
-              this,
-              fields,
-              tableId,
-              isTarget,
-              clickFieldHandler,
-              activeField,
-              classes
-            )}
-          />
-        );
-      }}
-    </Consumer>
+    <SortableStickyGrid
+      key={`cause ${tableId}`}
+      entities={fields}
+      gridHeaders={GRID_HEADERS}
+      className={classnames(classes.table, { [classes.targetTable]: isTarget })}
+      renderGridHeader={renderGridHeader.bind(null, fields, classes)}
+      renderGridBody={renderGridBody.bind(
+        this,
+        fields,
+        tableId,
+        isTarget,
+        clickFieldHandler,
+        activeField,
+        classes
+      )}
+    />
   );
 }
 
