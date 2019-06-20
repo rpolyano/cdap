@@ -42,6 +42,9 @@ const styles = (theme) => {
       color: theme.palette.blue[200],
       textAlign: 'right' as 'right',
     },
+    viewDropdown: {
+      paddingLeft: '3px',
+    },
   };
 };
 
@@ -79,7 +82,12 @@ function FllField({
             {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
           </span>
         )}
-      {field.id === activeField && <span className={classes.targetView}>View</span>}
+      {field.id === activeField && (
+        <span className={classes.targetView}>
+          View
+          <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+        </span>
+      )}
     </div>
   );
 }
