@@ -18,7 +18,6 @@ import React, { useState } from 'react';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
-import { createStyles } from '@material-ui/styles';
 
 const styles = (theme) => {
   return {
@@ -34,6 +33,9 @@ const styles = (theme) => {
         color: theme.palette.orange[50],
         fontWeight: 'bold' as 'bold',
       },
+    },
+    hoverText: {
+      color: theme.palette.blue[200],
     },
   };
 };
@@ -54,14 +56,13 @@ function FllField({ field, isTarget = false, clickFieldHandler, classes }: IFiel
   return (
     <div
       onClick={isTarget ? clickFieldHandler : undefined}
-      onMouseOver={toggleHoverState}
+      onMouseEnter={toggleHoverState}
       onMouseLeave={toggleHoverState}
       className={classnames('grid-row', 'grid-link', classes.root)}
-      key={field.id}
       id={field.id}
     >
       {field.name}
-      {isHovering && <span>{isTarget ? 'View' : 'View lineage'}</span>}
+      {isHovering && !isTarget && <span className={classes.hoverText}>{'View lineage'}</span>}
     </div>
   );
 }
