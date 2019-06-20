@@ -87,7 +87,7 @@ function renderGridHeader(fields, classes) {
     <div className={classes.tableHeader}>
       <div>{tableName}</div>
       <div className={classes.tableSubheader}>
-        {T.translate('features.FieldLevelLineage.v2.TableSubheader', { count })}
+        {T.translate('features.FieldLevelLineage.v2.FllTable.TableSubheader', { count })}
       </div>
     </div>
   );

@@ -1430,7 +1430,11 @@ features:
         RelatedSubheader: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and operations' 
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
-      TableSubheader: "{count} fields"
+      FllTable:
+        TableSubheader: "{count} fields"
+        FllField:
+          viewLineage: "View lineage"
+
 
   FileBrowser:
     directory: Directory

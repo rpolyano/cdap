@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
+import T from 'i18n-react';
 
 const styles = (theme) => {
   return {
@@ -62,7 +63,12 @@ function FllField({ field, isTarget = false, clickFieldHandler, classes }: IFiel
       id={field.id}
     >
       {field.name}
-      {isHovering && !isTarget && <span className={classes.hoverText}>{'View lineage'}</span>}
+      {isHovering &&
+        !isTarget && (
+          <span className={classes.hoverText}>
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
+          </span>
+        )}
     </div>
   );
 }
