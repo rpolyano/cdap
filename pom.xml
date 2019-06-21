@@ -1638,7 +1638,7 @@
           <configuration>
             <argLine>-Xmx5000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
-            <reuseForks>true</reuseForks>
+            <reuseForks>false</reuseForks>
             <forkCount>2C</forkCount>
             <reportFormat>plain</reportFormat>
             <trimStackTrace>false</trimStackTrace>
