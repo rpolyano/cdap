@@ -1431,7 +1431,9 @@ features:
         TargetHeader: 'Select a field to view lineage and operations' 
         TargetSubheader: "Viewing {first} to {last} of {total} fields"
       FllTable:
-        TableSubheader: "{count} fields"
+        fieldsCount: 
+          1: "{context} field"
+          _: "{context} fields"
         FllField:
           viewLineage: "View lineage"
 
