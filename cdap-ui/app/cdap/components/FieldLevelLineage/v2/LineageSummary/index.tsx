@@ -44,6 +44,9 @@ const styles = (theme) => {
 
 interface ILineageState {
   activeField: string;
+  // activeCauseSets: {} key is tableId, value is array of field objects
+  // activeImpactSets
+  // active links
 }
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
@@ -51,6 +54,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     super(props);
     this.state = {
       activeField: null,
+      // activeCauseSets: null, where null means we have no active field, {} means no active sets?, otherwise should have stuff
     };
   }
   // private activeField = null;
@@ -151,12 +155,35 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     this.drawLinks(fieldId);
   }
 
-  private drawRootAndImpact() {
+  private getActiveSets() {
     // Go through active links
+    // for each link, find the fieldId that doesn't start with 'target'
     // find the name(s) of the cause and impact tables that are in active links
     // need to somehow temporarily rendor a subset of the tables and fields, and re-render when user clicks "reset"
     // Do I need a separate render function? i.e. renderSelectedFields or something like that?
     // Could potentially also use it for filtering
+  }
+
+  // example: "target_ns-default_ds-Employee_Data_fd-id"
+  private parseFieldId(fieldId) {
+    let truncId;
+    const pref = fieldId.slice(0, 5);
+    const type = pref === 'cause' ? pref : pref + 't';
+    // chop off the "target_" or "cause_" delimiter
+    truncId = type === 'cause' ? fieldId.slice(6) : fieldId.slice(7);
+    // Look for "_fd-" delimiter - everything before that is the tableId, and everything after is the fieldname
+    const fdIndex = truncId.indexOf('_fd-');
+    const tableId = truncId.slice(0, fdIndex);
+    // also need to get the dataset name out of datasetId
+    const dsName = tableId.slice(tableId.indexOf('_ds-') + 4);
+    const fieldName = truncId.slice(fdIndex + 4);
+    const field = {
+      id: fieldId,
+      name: fieldName,
+      group: dsName,
+    };
+
+    return { field, tableId, type };
   }
 
   public componentWillUnmount() {

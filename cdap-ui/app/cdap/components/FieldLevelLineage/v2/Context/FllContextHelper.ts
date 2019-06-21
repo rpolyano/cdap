@@ -1,3 +1,5 @@
+import { string } from 'prop-types';
+
 /*
  * Copyright © 2019 Cask Data, Inc.
  *
