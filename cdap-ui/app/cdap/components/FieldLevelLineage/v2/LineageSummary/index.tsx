@@ -132,6 +132,17 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       .style('fill', edgeColor);
   }
 
+  private drawActiveLinks() {
+    // clear any existing links and anchors
+    d3.select('#links-container')
+      .selectAll('path,rect')
+      .remove();
+
+    this.state.activeLinks.forEach((link) => {
+      this.drawLineFromLink(link, true);
+    });
+  }
+
   private drawLinks(activeFieldId = null) {
     // clear any existing links and anchors
     d3.select('#links-container')
@@ -154,7 +165,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
 
   private handleFieldClick(e) {
     const activeField = (e.target as HTMLAreaElement).id;
-    if (activeField === '') {
+    if (!activeField) {
       return;
     }
     d3.select(`#${this.state.activeField}`).classed('selected', false);
@@ -209,15 +220,24 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       }
       activeTables[nonTargetFd.tableId].push(nonTargetFd.field);
     });
-    this.setState(() => ({
-      ...this.state,
-      activeCauseSets,
-      activeImpactSets,
-    }));
+    this.setState(
+      {
+        ...this.state,
+        activeCauseSets,
+        activeImpactSets,
+      },
+      () => {
+        this.setState({
+          ...this.state,
+          showingOneField: true,
+        });
+      }
+    );
   }
 
   private handleViewCauseImpact() {
     this.getActiveSets();
+    // this.drawActiveLinks(); this doesn't work because we need to get the id's after it is rerendered
   }
 
   public componentWillUnmount() {
@@ -256,7 +276,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
                 <g>
-                  {links.map((link) => {
+                  {visibleLinks.map((link) => {
                     const id = `${link.source}_${link.destination}`;
                     return <svg id={id} key={id} className="fll-link" />;
                   })}
@@ -264,14 +284,18 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                 <g id="selected-links" />
               </svg>
               <div>
-                <FllHeader type="cause" first={firstCause} total={Object.keys(causeSets).length} />
-                {Object.keys(causeSets).map((key) => {
+                <FllHeader
+                  type="cause"
+                  first={firstCause}
+                  total={Object.keys(visibleCauseSets).length}
+                />
+                {Object.keys(visibleCauseSets).map((key) => {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
                       key={key}
                       tableId={key}
-                      fields={causeSets[key]}
+                      fields={visibleCauseSets[key]}
                       activeField={this.state.activeField}
                     />
                   );
@@ -296,15 +320,15 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                 <FllHeader
                   type="impact"
                   first={firstImpact}
-                  total={Object.keys(impactSets).length}
+                  total={Object.keys(visibleImpactSets).length}
                 />
-                {Object.keys(impactSets).map((key) => {
+                {Object.keys(visibleImpactSets).map((key) => {
                   return (
                     <FllTable
                       clickFieldHandler={this.handleFieldClick.bind(this)}
                       key={key}
                       tableId={key}
-                      fields={impactSets[key]}
+                      fields={visibleImpactSets[key]}
                       activeField={this.state.activeField}
                     />
                   );
