@@ -17,6 +17,7 @@
 import React from 'react';
 import FllHeader from 'components/FieldLevelLineage/v2/FllHeader';
 import FllTable from 'components/FieldLevelLineage/v2/FllTable';
+import { ITableFields, ILink } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import withStyles from '@material-ui/core/styles/withStyles';
 import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import * as d3 from 'd3';
@@ -44,9 +45,10 @@ const styles = (theme) => {
 
 interface ILineageState {
   activeField: string;
-  // activeCauseSets: {} key is tableId, value is array of field objects
-  // activeImpactSets
-  // active links
+  activeCauseSets: ITableFields;
+  activeImpactSets: ITableFields;
+  activeLinks: ILink[];
+  showingOneField: boolean;
 }
 
 class LineageSummary extends React.Component<{ classes }, ILineageState> {
@@ -54,12 +56,13 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     super(props);
     this.state = {
       activeField: null,
-      // activeCauseSets: null, where null means we have no active field, {} means no active sets?, otherwise should have stuff
+      activeCauseSets: null,
+      activeImpactSets: null,
+      activeLinks: null,
+      showingOneField: false,
     };
   }
-  // private activeField = null;
   private allLinks = [];
-  private activeLinks = [];
 
   // TO DO: This currently breaks when the window is scrolled before drawing
   private drawLineFromLink({ source, destination }, isSelected = false) {
@@ -143,25 +146,28 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       }
       this.drawLineFromLink(link, isSelected);
     });
-    this.activeLinks = activeLinks;
+    this.setState(() => ({
+      ...this.state,
+      activeLinks,
+    }));
   }
 
   private handleFieldClick(e) {
+    const activeField = (e.target as HTMLAreaElement).id;
+    if (activeField === '') {
+      return;
+    }
     d3.select(`#${this.state.activeField}`).classed('selected', false);
-    const fieldId = (e.target as HTMLAreaElement).id;
-    this.setState({ activeField: fieldId });
-    d3.select(`#${fieldId}`).classed('selected', true);
-
-    this.drawLinks(fieldId);
-  }
-
-  private getActiveSets() {
-    // Go through active links
-    // for each link, find the fieldId that doesn't start with 'target'
-    // find the name(s) of the cause and impact tables that are in active links
-    // need to somehow temporarily rendor a subset of the tables and fields, and re-render when user clicks "reset"
-    // Do I need a separate render function? i.e. renderSelectedFields or something like that?
-    // Could potentially also use it for filtering
+    this.setState(
+      {
+        ...this.state,
+        activeField,
+      },
+      () => {
+        d3.select(`#${activeField}`).classed('selected', true);
+        this.drawLinks(activeField);
+      }
+    );
   }
 
   // example: "target_ns-default_ds-Employee_Data_fd-id"
@@ -186,6 +192,35 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     return { field, tableId, type };
   }
 
+  private getActiveSets() {
+    const activeCauseSets = {};
+    const activeImpactSets = {};
+
+    // Go through active links
+    this.state.activeLinks.forEach((link) => {
+      // for each link, find the fieldId that doesn't start with 'target'
+      const sourceInfo = this.parseFieldId(link.source);
+      const destInfo = this.parseFieldId(link.destination);
+      const nonTargetFd = sourceInfo.type !== 'target' ? sourceInfo : destInfo;
+      // find the name(s) of the cause and impact tables that are in active links
+      const activeTables = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
+      if (!(nonTargetFd.tableId in activeTables)) {
+        activeCauseSets[nonTargetFd.tableId] = [];
+      }
+      activeCauseSets[nonTargetFd.tableId].push(nonTargetFd.field);
+    });
+    this.setState(() => ({
+      ...this.state,
+      activeCauseSets,
+      activeImpactSets,
+    }));
+  }
+
+  private handleViewCauseImpact() {
+    console.log('calling click handler on child');
+    // this.getActiveSets();
+  }
+
   public componentWillUnmount() {
     window.removeEventListener('resize', debounce(this.drawLinks.bind(this), 1));
   }
@@ -208,6 +243,16 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           links,
         }) => {
           this.allLinks = links;
+          let visibleLinks = this.allLinks;
+          let visibleCauseSets = causeSets;
+          let visibleImpactSets = impactSets;
+
+          if (this.state.showingOneField) {
+            visibleLinks = this.state.activeLinks;
+            visibleCauseSets = this.state.activeCauseSets;
+            visibleImpactSets = this.state.activeImpactSets;
+          }
+
           return (
             <div className={this.props.classes.root} id="fll-container">
               <svg id="links-container" className={this.props.classes.container}>
@@ -245,6 +290,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                   tableId={target}
                   fields={targetFields}
                   activeField={this.state.activeField}
+                  viewCauseImpactHandler={this.handleViewCauseImpact.bind(this)}
                 />
               </div>
               <div>

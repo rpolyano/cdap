@@ -21,7 +21,6 @@ import createStyles from '@material-ui/core/styles/createStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 import { INode } from 'components/FieldLevelLineage/v2/Context/FllContext';
-import { Consumer } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 
 const styles = (theme) => {
@@ -79,6 +78,7 @@ interface ITableProps extends WithStyles<typeof styles> {
   isTarget?: boolean;
   clickFieldHandler: (fieldId: string) => void;
   activeField: string;
+  viewCauseImpactHandler?: () => void;
 }
 
 function renderGridHeader(fields, classes) {
@@ -94,7 +94,15 @@ function renderGridHeader(fields, classes) {
   );
 }
 
-function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeField, classes) {
+function renderGridBody(
+  fields,
+  tableName,
+  isTarget,
+  clickFieldHandler,
+  activeField,
+  viewCauseImpactHandler,
+  classes
+) {
   return (
     <div className={classes.gridBody} id={tableName}>
       {fields.map((field) => {
@@ -105,6 +113,7 @@ function renderGridBody(fields, tableName, isTarget, clickFieldHandler, activeFi
             isTarget={isTarget}
             activeField={activeField}
             field={field}
+            viewCauseImpactHandler={viewCauseImpactHandler}
           />
         );
       })}
@@ -119,6 +128,7 @@ function FllTable({
   isTarget = false,
   clickFieldHandler,
   activeField,
+  viewCauseImpactHandler,
 }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
   return (
@@ -135,6 +145,7 @@ function FllTable({
         isTarget,
         clickFieldHandler,
         activeField,
+        viewCauseImpactHandler,
         classes
       )}
     />

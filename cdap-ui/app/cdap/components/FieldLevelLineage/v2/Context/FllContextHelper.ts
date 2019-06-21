@@ -21,10 +21,20 @@ export interface ILink {
   destination: string;
 }
 
+export interface IField {
+  id: string;
+  name: string;
+  group: string;
+}
+
+export interface ITableFields {
+  [tablename: string]: IField[];
+}
+
 // Parses an incoming or outgoing entity object from backend response to get unique nodes (one per incoming or outgoing field), connections, and an object with fieldnames for each incoming or outgoing dataset
 
 export function parseRelations(namespace, target, ents, isCause = true) {
-  const tables = {};
+  const tables: ITableFields = {};
   const relNodes = [];
   const relLinks = [];
   ents.map((ent) => {
@@ -42,7 +52,7 @@ export function parseRelations(namespace, target, ents, isCause = true) {
       // backend response assumes connection goes from left to right, i.e. an incoming connection's source = incoming field and destination = target field, and outgoing connection's source = target field.
       const fieldName = isCause ? rel.source : rel.destination;
       let id = fieldIds.get(fieldName);
-      const field = {
+      const field: IField = {
         id,
         name: fieldName,
         group: ent.entityId.dataset,
@@ -69,13 +79,14 @@ export function parseRelations(namespace, target, ents, isCause = true) {
 }
 
 export function makeTargetNodes(entityId, fields) {
-  const targetNodes = fields.map((field) => {
-    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${field}`;
-    return {
+  const targetNodes = fields.map((fieldname) => {
+    const id = `target_ns-${entityId.namespace}_ds-${entityId.dataset}_fd-${fieldname}`;
+    const field: IField = {
       id,
-      name: field,
+      name: fieldname,
       group: entityId.dataset,
     };
+    return field;
   });
   return targetNodes;
 }

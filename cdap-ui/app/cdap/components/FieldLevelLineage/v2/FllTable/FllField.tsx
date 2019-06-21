@@ -52,7 +52,8 @@ interface IFieldProps extends WithStyles<typeof styles> {
   field: INode;
   isTarget: boolean;
   activeField: string;
-  clickFieldHandler: (event: React.MouseEvent<HTMLInputElement>) => void;
+  clickFieldHandler: (event: React.MouseEvent<HTMLDivElement>) => void;
+  viewCauseImpactHandler?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 function FllField({
@@ -60,6 +61,7 @@ function FllField({
   isTarget = false,
   clickFieldHandler,
   activeField,
+  viewCauseImpactHandler,
   classes,
 }: IFieldProps) {
   const [isHovering, setHoverState] = useState<boolean>(false);
@@ -82,12 +84,13 @@ function FllField({
             {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewLineage')}
           </span>
         )}
-      {field.id === activeField && (
-        <span className={classes.targetView}>
-          View
-          <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
-        </span>
-      )}
+      {field.id === activeField &&
+        isTarget && (
+          <span className={classes.targetView} onClick={viewCauseImpactHandler}>
+            View
+            <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
+          </span>
+        )}
     </div>
   );
 }
