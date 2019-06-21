@@ -235,9 +235,14 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     );
   }
 
+  public componentDidUpdate() {
+    if (this.state.showingOneField) {
+      this.drawActiveLinks();
+    }
+  }
+
   private handleViewCauseImpact() {
     this.getActiveSets();
-    // this.drawActiveLinks(); this doesn't work because we need to get the id's after it is rerendered
   }
 
   public componentWillUnmount() {
