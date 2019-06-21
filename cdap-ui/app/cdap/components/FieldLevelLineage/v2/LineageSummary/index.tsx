@@ -205,9 +205,9 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
       // find the name(s) of the cause and impact tables that are in active links
       const activeTables = nonTargetFd.type === 'cause' ? activeCauseSets : activeImpactSets;
       if (!(nonTargetFd.tableId in activeTables)) {
-        activeCauseSets[nonTargetFd.tableId] = [];
+        activeTables[nonTargetFd.tableId] = [];
       }
-      activeCauseSets[nonTargetFd.tableId].push(nonTargetFd.field);
+      activeTables[nonTargetFd.tableId].push(nonTargetFd.field);
     });
     this.setState(() => ({
       ...this.state,
@@ -217,8 +217,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
   }
 
   private handleViewCauseImpact() {
-    console.log('calling click handler on child');
-    // this.getActiveSets();
+    this.getActiveSets();
   }
 
   public componentWillUnmount() {
