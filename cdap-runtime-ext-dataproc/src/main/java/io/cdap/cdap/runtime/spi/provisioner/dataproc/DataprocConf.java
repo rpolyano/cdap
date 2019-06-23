@@ -43,6 +43,7 @@ public class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
+  static final String IN_NETWORK = "inNetwork";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
 
@@ -70,6 +71,7 @@ public class DataprocConf {
   private final long pollInterval;
 
   private final boolean preferExternalIP;
+  private final boolean inNetwork;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
@@ -79,7 +81,7 @@ public class DataprocConf {
                        String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
-                       boolean preferExternalIP, boolean stackdriverLoggingEnabled,
+                       boolean preferExternalIP, boolean inNetwork, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
@@ -100,6 +102,7 @@ public class DataprocConf {
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
     this.preferExternalIP = preferExternalIP;
+    this.inNetwork = inNetwork;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
@@ -164,6 +167,10 @@ public class DataprocConf {
 
   public boolean isPreferExternalIP() {
     return preferExternalIP;
+  }
+
+  public boolean isInNetwork() {
+    return inNetwork;
   }
 
   public boolean isStackdriverLoggingEnabled() {
@@ -289,6 +296,7 @@ public class DataprocConf {
     long pollInterval = getLong(properties, "pollInterval", 2);
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
+    boolean inNetwork = Boolean.parseBoolean(properties.getOrDefault(IN_NETWORK, "false"));
     // By default stackdriver is enabled. This is for backward compatibility
     boolean stackdriverLoggingEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
                                                                                      "true"));
@@ -306,7 +314,7 @@ public class DataprocConf {
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
+                            preferExternalIP, inNetwork, stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
                             publicKey, dataprocProps);
   }
 

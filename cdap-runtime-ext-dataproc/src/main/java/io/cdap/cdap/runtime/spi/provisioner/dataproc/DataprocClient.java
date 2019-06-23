@@ -390,7 +390,9 @@ public class DataprocClient implements AutoCloseable {
       ts = -1L;
     }
     String ip = properties.get("ip.external");
-    if (network.equals(systemNetwork) && !conf.isPreferExternalIP()) {
+    // if the network and the systemNetwork (where data fusion is running are same or they are in network via
+    // network peering and prefer external ip is not set to true then use private ip
+    if ((network.equals(systemNetwork) || conf.isInNetwork()) && !conf.isPreferExternalIP()) {
       ip = properties.get("ip.internal");
     }
     return new Node(nodeName, type, ip, ts, properties);
