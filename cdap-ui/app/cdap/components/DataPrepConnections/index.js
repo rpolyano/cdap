@@ -32,7 +32,6 @@ import {
 import { Route, Switch, Redirect } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import T from 'i18n-react';
-import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
@@ -1150,7 +1149,7 @@ export default class DataPrepConnections extends Component {
       return (
         <div className="text-center">
           {this.props.singleWorkspaceMode || this.props.enableRouting ? null : pageTitle}
-          <LoadingSVG />
+          <LoadingSVGCentered />;
         </div>
       );
     }
