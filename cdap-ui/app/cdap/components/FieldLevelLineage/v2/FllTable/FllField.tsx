@@ -87,10 +87,13 @@ function FllField({
       {field.id === activeField &&
         isTarget && (
           <span className={classes.targetView} onClick={viewCauseImpactHandler}>
-            View
+            {T.translate('features.FieldLevelLineage.v2.FllTable.FllField.viewDropdown')}
             <span className={classnames('fa', 'fa-chevron-down', classes.viewDropdown)} />
           </span>
         )}
+      {/* {field.id === activeField &&
+        isTarget &&
+        showingOneField && <span className={classes.targetView}>{T.translate('features.FieldLevelLineage.v2.FllTable.FllField.resetLineage')}</span>} */}
     </div>
   );
 }

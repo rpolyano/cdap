@@ -71,7 +71,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     const destEl = d3.select(`#${destination}`);
 
     const offsetX = -100; // From the padding on the LineageSummary
-    const offsetY = -50 + window.pageYOffset; // From the FllHeader
+    const offsetY = -48 + window.pageYOffset; // From the FllHeader
 
     const sourceXY = sourceEl.node().getBoundingClientRect();
     const destXY = destEl.node().getBoundingClientRect();

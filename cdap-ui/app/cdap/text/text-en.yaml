@@ -1436,6 +1436,8 @@ features:
           _: "{context} fields"
         FllField:
           viewLineage: "View lineage"
+          viewDropdown: "View"
+          resetLineage: "Reset"
 
 
   FileBrowser:
