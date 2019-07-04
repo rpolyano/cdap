@@ -87,7 +87,7 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
     if (!uiPath.exists()) {
       uiPath = new File("ui", "index.js");
     }
-    Preconditions.checkState(uiPath.exists(), "Missing something.js at " + uiPath.getAbsolutePath());
+    Preconditions.checkState(uiPath.exists(), "Missing server/index.js at " + uiPath.getAbsolutePath());
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE,
                                                 uiPath.getAbsolutePath(),
                                                 "cConf=\"" + cConfJsonFile.getAbsolutePath() + "\"",
