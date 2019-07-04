@@ -138,6 +138,7 @@ angular.module(PKG.name + '.commons')
             try {
               schema = JSON.parse(jsonString);
               $scope.avro.schema = schema;
+              console.log("hello!");
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }

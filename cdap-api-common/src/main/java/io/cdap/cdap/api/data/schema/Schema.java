@@ -18,6 +18,7 @@ package io.cdap.cdap.api.data.schema;
 
 import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.extensions.BaseExtension;
 import io.cdap.cdap.internal.io.SQLSchemaParser;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 
@@ -176,6 +177,8 @@ public final class Schema implements Serializable {
     private final String name;
     private Schema schema;
 
+    private final List<BaseExtension> extensions;
+
     /**
      * Creates a {@link Field} instance with the given name and {@link Schema}.
      *
@@ -184,12 +187,26 @@ public final class Schema implements Serializable {
      * @return A new {@link Field} instance.
      */
     public static Field of(String name, Schema schema) {
-      return new Field(name, schema);
+      return new Field(name, schema, null);
     }
 
-    private Field(String name, Schema schema) {
+    /**
+     * Creates a {@link Field} instance with the given name and {@link Schema}.
+     *
+     * @param name Name of the field.
+     * @param schema Schema of the field.
+     * @param extensions Extensions for the field.
+     * @return A new {@link Field} instance.
+     */
+    public static Field of(String name, Schema schema, List<BaseExtension> extensions) {
+      return new Field(name, schema, extensions);
+    }
+
+    private Field(String name, Schema schema,
+        List<BaseExtension> extensions) {
       this.name = name;
       this.schema = schema;
+      this.extensions = extensions;
     }
 
     /**
